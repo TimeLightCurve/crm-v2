@@ -1,26 +1,29 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@font-face {
+  font-family: Anjoman;
+  src: url("/fonts/Anjoman_Pro/01%20-%20Anjoman%20Font%20Family/05-%20Webfonts/02-%20Woff2/Anjoman-Regular.woff2")
+    format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Anjoman;
+  src: url("/fonts/Anjoman_Pro/01%20-%20Anjoman%20Font%20Family/05-%20Webfonts/02-%20Woff2/Anjoman-Bold.woff2")
+    format("woff2");
+  font-weight: 600 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Nian;
+  src: url("/fonts/Nian/Nian%20Bold.ttf") format("truetype");
+  font-weight: 600 900;
+  font-display: swap;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }

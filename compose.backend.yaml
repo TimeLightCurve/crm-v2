@@ -1,0 +1,24 @@
+name: forma
+services:
+  api:
+    build:
+      context: ${NABZ_BACKEND_PATH:-../../nabz-crm/nabz-crm}
+      dockerfile: Dockerfile.ui
+    ports:
+      - "127.0.0.1:8081:8080"
+    environment:
+      NABZ_ADDR: ":8080"
+      NABZ_POSTGRES_URL: ${NABZ_POSTGRES_URL:-postgres://nabz:nabz_local_only@nabz-ui-postgres-1:5432/nabz?sslmode=disable}
+      NABZ_UI_ONLY: "true"
+      NABZ_ALLOW_ROLE_SELECTION: "false"
+      NABZ_AUTH_FAIL_CLOSED: "true"
+      NABZ_AGENT_LM_STUDIO_ENABLED: ${NABZ_AGENT_LM_STUDIO_ENABLED:-false}
+      NABZ_AGENT_LM_STUDIO_BASE_URL: ${NABZ_AGENT_LM_STUDIO_BASE_URL:-http://host.docker.internal:1234/v1}
+      NABZ_AGENT_LM_STUDIO_API_KEY: ${NABZ_AGENT_LM_STUDIO_API_KEY:-}
+    restart: unless-stopped
+    networks:
+      - nabz
+networks:
+  nabz:
+    external: true
+    name: ${NABZ_DOCKER_NETWORK:-nabz-ui_default}
