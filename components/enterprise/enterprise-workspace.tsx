@@ -4,6 +4,7 @@ import { AlertTriangle, ArrowLeft, CalendarDays, CheckCircle2, Download, FolderO
 import type { Locale } from "@/lib/crm-data";
 import { decisionStages, kinds, type EnterpriseRecord, type Kind } from "@/lib/enterprise/domain";
 import { useSession } from "@/lib/backend";
+import RelationshipMap from "./relationship-map";
 
 const labels: Record<Kind, [string, string]> = {
   decision: ["Decisions", "تصمیم‌ها"], case: ["Cases", "پرونده‌ها"], meeting: ["Meetings", "جلسه‌ها"],
@@ -34,6 +35,7 @@ export default function EnterpriseWorkspace({ locale }: { locale: Locale }) {
   const [editing, setEditing] = useState<Partial<EnterpriseRecord> | null>(null);
   const [query, setQuery] = useState("");
   const [attention, setAttention] = useState<"overdue" | "pending" | "risk" | null>(null);
+  const [showMap, setShowMap] = useState(false);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -61,6 +63,12 @@ export default function EnterpriseWorkspace({ locale }: { locale: Locale }) {
   const overdue = records.filter((record) => record.dueDate && record.dueDate < new Date().toISOString().slice(0, 10) && !["done", "closed", "outcome"].includes(record.stage));
   const pending = records.filter((record) => record.kind === "decision" && record.stage === "ready" && !record.approvedAt);
   const risky = records.filter((record) => record.kind === "risk" && ["high", "critical"].includes(record.severity) && record.stage !== "closed");
+  const selectFromMap = useCallback((record: EnterpriseRecord) => {
+    setKind(record.kind);
+    setAttention(null);
+    setSelected(record.id);
+    setEditing(null);
+  }, []);
   async function submit() {
     if (!editing) return;
     setBusy(true); setError("");
@@ -96,6 +104,7 @@ export default function EnterpriseWorkspace({ locale }: { locale: Locale }) {
     <div className="mb-6 flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs font-bold tracking-wide text-[#7d70a5]">NABZ · ENTERPRISE</p><h1 className="mt-1 text-3xl font-bold">{t("Company decision desk", "میز تصمیم شرکت")}</h1><p className="mt-2 text-sm text-[#767189]">{t("Decisions, evidence, risks and follow-through in one accountable workspace.", "تصمیم‌ها، شواهد، ریسک‌ها و پیگیری در یک فضای پاسخ‌گو.")}</p></div><div className="flex gap-2"><button onClick={exportCsv} className="rounded-xl border border-[#d8d1e4] bg-white px-3 py-2 text-xs"><Download size={15} className="inline" /> CSV</button><button onClick={exportRecords} className="rounded-xl border border-[#d8d1e4] bg-white px-3 py-2 text-xs"><Download size={15} className="inline" /> JSON</button></div></div>
     {error && <div role="alert" className="mb-4 rounded-xl border border-[#e9b8b0] bg-[#fff0ee] p-3 text-sm text-[#973e3d]">{error} <button onClick={() => { setError(""); void refresh().catch((cause) => setError(cause.message)); }} className="underline">{t("Retry", "تلاش دوباره")}</button></div>}
     <div className="mb-5 grid gap-3 sm:grid-cols-3"><Stat icon={ListTodo} label={t("Overdue", "عقب‌افتاده")} count={overdue.length} tone="rose" onClick={() => { setKind("desk"); setAttention(attention === "overdue" ? null : "overdue"); setSelected(""); }} /><Stat icon={GitBranch} label={t("Awaiting decision", "منتظر تصمیم")} count={pending.length} tone="amber" onClick={() => { setKind("decision"); setAttention(attention === "pending" ? null : "pending"); setSelected(""); }} /><Stat icon={AlertTriangle} label={t("High risks", "ریسک‌های بالا")} count={risky.length} tone="violet" onClick={() => { setKind("risk"); setAttention(attention === "risk" ? null : "risk"); setSelected(""); }} /></div>
+    {records.length > 0 && <div className={`${cardStyle} mb-5 p-4`}><div className="mb-3 flex items-center justify-between gap-3"><div><h2 className="text-base font-bold">{t("Relationship map", "نقشه روابط")}</h2><p className="text-xs text-[#827c96]">{t("Only saved links between authorized records appear", "فقط پیوندهای ثبت‌شده میان رکوردهای مجاز نمایش داده می‌شود")}</p></div><button onClick={() => setShowMap(!showMap)} aria-expanded={showMap} className="rounded-xl bg-[#e7e0f4] px-3 py-2 text-xs font-bold">{showMap ? t("Close map", "بستن نقشه") : t("Open 3D map", "نمای سه‌بعدی")}</button></div>{showMap && <RelationshipMap records={records} onSelect={selectFromMap} locale={locale} />}</div>}
     <div className="grid gap-4 xl:grid-cols-[220px_minmax(0,1fr)]"><nav aria-label={t("Enterprise areas", "بخش‌های سازمانی")} className={`${cardStyle} p-3`}><button onClick={() => { setKind("desk"); setAttention(null); setSelected(""); }} className={`mb-2 w-full rounded-xl px-3 py-3 text-start text-sm ${kind === "desk" ? "bg-[#dcd3f4] font-bold" : "hover:bg-[#f1ecf8]"}`}><Sparkles size={17} className="me-2 inline" />{t("Manager desk", "میز مدیر")}</button>{kinds.map((item) => { const Icon = icons[item]; return <button key={item} onClick={() => { setKind(item); setAttention(null); setSelected(""); }} className={`mb-1 flex w-full items-center justify-between rounded-xl px-3 py-3 text-start text-sm ${kind === item ? "bg-[#dcd3f4] font-bold" : "hover:bg-[#f1ecf8]"}`}><span><Icon size={17} className="me-2 inline" />{t(...labels[item])}</span><span className="text-xs text-[#827c96]">{records.filter((record) => record.kind === item).length}</span></button>; })}<div className="mt-4 rounded-xl bg-[#e5f1e8] p-3 text-xs leading-6 text-[#355a4c]">{t("AI suggestions require configured providers. Records and approval work without a model.", "پیشنهاد هوش مصنوعی به مدل متصل نیاز دارد. ثبت، پیگیری و تأیید بدون مدل کار می‌کنند.")}</div></nav>
       <div className="space-y-4"><div className={`${cardStyle} flex flex-wrap items-center gap-3 p-4`}><div className="relative min-w-48 flex-1"><Search size={16} className="absolute start-3 top-3 text-[#978ca8]" /><input className={`${inputStyle} ps-9`} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("Search records", "جست‌وجوی پرونده‌ها")} /></div><button onClick={() => { setEditing(blank(kind === "desk" ? "decision" : kind, session?.user?.id || "")); setSelected(""); }} className="rounded-xl bg-[#524598] px-4 py-2.5 text-sm font-bold text-white"><Plus size={17} className="me-1 inline" />{t("Create", "ایجاد")}</button></div>
       {selected && current && !editing ? <div className={`${cardStyle} p-5`}><div className="flex items-start justify-between gap-3"><div><p className="text-xs text-[#827c96]">{t(...labels[current.kind])} · {t(...(stages[current.stage] || [current.stage, current.stage]))} · v{current.revision}</p><h2 className="mt-1 text-2xl font-bold">{current.title}</h2></div><button onClick={() => setSelected("")} aria-label={t("Close detail", "بستن جزئیات")}><X size={19} /></button></div><p className="mt-4 whitespace-pre-wrap text-sm leading-7">{current.summary || t("No summary yet", "هنوز خلاصه‌ای ثبت نشده است")}</p><div className="mt-4 grid gap-3 sm:grid-cols-3"><Mini label={t("Owner", "مسئول")} value={current.ownerId || t("Unassigned", "تعیین نشده")} /><Mini label={t("Due date", "موعد")} value={current.dueDate || "—"} /><Mini label={t("Approval", "تأیید")} value={current.approvedAt ? `${current.approvedBy} · ${new Date(current.approvedAt).toLocaleString(locale)}` : t("Pending", "تأیید نشده")} /></div>
