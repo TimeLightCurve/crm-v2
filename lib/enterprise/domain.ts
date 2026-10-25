@@ -57,6 +57,6 @@ export function validateInput(value: unknown, kind: Kind, previous?: EnterpriseR
   if (previous?.approvedAt) throw Error("Approved decisions require a new superseding record");
   return next;
 }
-export function canRead(permissions: string[]) { return permissions.includes("sales:read") || permissions.includes("enterprise:read"); }
-export function canWrite(permissions: string[]) { return permissions.includes("sales:write") || permissions.includes("enterprise:write"); }
+export function canRead(permissions: string[]) { return permissions.includes("*") || permissions.includes("sales:read") || permissions.includes("enterprise:read"); }
+export function canWrite(permissions: string[]) { return permissions.includes("*") || permissions.includes("sales:write") || permissions.includes("enterprise:write"); }
 export function canApprove(role: string, permissions: string[]) { return canWrite(permissions) && ["owner", "admin", "sales-manager", "manager"].includes(role); }

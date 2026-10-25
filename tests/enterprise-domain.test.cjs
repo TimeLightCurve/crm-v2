@@ -24,4 +24,6 @@ test("read, write and approval are separately gated", () => {
   assert.equal(canWrite(["sales:read"]), false);
   assert.equal(canApprove("member", ["sales:write"]), false);
   assert.equal(canApprove("owner", ["sales:write"]), true);
+  assert.equal(canRead(["*"]), true);
+  assert.equal(canApprove("owner", ["*"]), true);
 });
