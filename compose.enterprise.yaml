@@ -1,0 +1,43 @@
+name: nabz-enterprise
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: nabz_enterprise
+      POSTGRES_USER: nabz_enterprise
+      POSTGRES_PASSWORD_FILE: /run/secrets/enterprise_db_password
+    secrets:
+      - enterprise_db_password
+    volumes:
+      - enterprise_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nabz_enterprise -d nabz_enterprise"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks: [private]
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.enterprise
+    environment:
+      NABZ_API_URL: ${NABZ_API_URL:?set the Nabz auth API URL}
+      ENTERPRISE_DATABASE_URL_FILE: /run/secrets/enterprise_database_url
+    secrets:
+      - enterprise_database_url
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [private, edge]
+    restart: unless-stopped
+networks:
+  private: { internal: true }
+  edge:
+    external: true
+    name: ${EDGE_NETWORK:?set the proxy network}
+volumes:
+  enterprise_pgdata:
+secrets:
+  enterprise_db_password:
+    file: ${ENTERPRISE_DB_PASSWORD_FILE:?set the database password file}
+  enterprise_database_url:
+    file: ${ENTERPRISE_DATABASE_URL_FILE:?set the database URL secret file}

@@ -40,6 +40,7 @@ import CrmWorkspace from "../records/crm-workspace";
 import { useServerProperty, useSession } from "@/lib/backend";
 import { emptyLead } from "@/lib/call-data";
 import NativeWorkspace from "../native-workspace";
+import EnterpriseWorkspace from "../enterprise/enterprise-workspace";
 import WorkspaceSettings from "../records/workspace-settings";
 import { useCrmState } from "@/lib/records/store";
 
@@ -96,6 +97,12 @@ export default function SalesWorkspace({
   const [assistantAnswer, setAssistantAnswer] = useState("");
   const [scheduled, setScheduled] = useState(false);
   const [topTab, setTopTab] = useState("records");
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      if (new URLSearchParams(window.location.search).get("view") === "enterprise") setTopTab("enterprise");
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
   const searchRef = useRef<HTMLInputElement>(null);
   const transcriptRef = useRef<HTMLDivElement>(null);
   const lead = leads.find((l) => l.id === selected) ?? emptyLead;
@@ -411,6 +418,7 @@ export default function SalesWorkspace({
               {[
                 ["workspace", t("Workspace", "فضای کار")],
                 ["records", t("CRM", "رکوردها")],
+                ["enterprise", t("Executive desk", "میز مدیر")],
                 ["schedule", t("Schedule", "برنامه")],
                 ["reports", t("Nabz records", "رکوردهای نبض")],
                 ["team", t("Team", "تیم")],
@@ -603,7 +611,8 @@ export default function SalesWorkspace({
             <div hidden={topTab !== "schedule"}>
               <ScheduleWorkspace locale={locale} />
             </div>
-            {topTab === "schedule" || topTab === "records" ? null : topTab ===
+            {topTab === "enterprise" && <EnterpriseWorkspace locale={locale} />}
+            {topTab === "schedule" || topTab === "records" || topTab === "enterprise" ? null : topTab ===
               "workspace" ? (
               leads.length === 0 ? (
                 <section className="rounded-3xl bg-[#f3efdc] p-8 text-[#35364d]">
